@@ -1,0 +1,189 @@
+.opcion-personaje {
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    border: 2px solid #87ceeb;
+}
+.opcion-personaje:hover {
+    box-shadow: 0 4px 16px rgba(30,144,255,0.25);
+    border-color: #ffe680;
+}
+.opcion-personaje input[type="radio"] {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    accent-color: #ff4500;
+}
+/* === ESTILO GENERAL === */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Raleway', sans-serif;
+    background: linear-gradient(to bottom, #001f3f, #003366, #004d66);
+    color: #f0f8ff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* === TITULO PRINCIPAL === */
+h1 {
+    text-align: center;
+    color: #ffe680;
+    background: linear-gradient(90deg, #ff4500, #1e90ff, #3cb371, #f0e68c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 3rem;
+    margin: 1rem 0;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+}
+
+/* === TITULOS SECUNDARIOS === */
+h2, h4 {
+    color: #87cefa;
+    text-align: center;
+    text-transform: uppercase;
+    margin: 1rem 0;
+    font-weight: 700;
+}
+
+/* === SECCIONES (contenedores flex) === */
+.container {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid #87ceeb;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem;
+    max-width: 800px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* === BOTONES === */
+button {
+    padding: 0.8rem 1.2rem;
+    margin: 0.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+.primary-button {
+    background: linear-gradient(45deg, #ff4500, #ff6347);
+    color: white;
+}
+
+.secondary-button {
+    background: linear-gradient(45deg, #4682b4, #1e90ff);
+    color: white;
+}
+
+#boton-reglas, #boton-personaje, #boton-punio, #boton-patada, #boton-barrida {
+    background: linear-gradient(45deg, #3cb371, #2e8b57);
+    color: white;
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+button:disabled {
+    background: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* === FORMATO DE LISTAS === */
+ol, ul {
+    text-align: left;
+    margin: 0.5rem 0;
+}
+
+/* === FLEXBOX PARA OPCIONES DE PERSONAJE === */
+#seleccionar-personaje div {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+label {
+    background: none;
+    padding: 0.2rem 0.5rem 0 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffe680;
+    text-shadow: 1px 1px 4px #003366;
+}
+
+label:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.imagen-personaje {
+    width: 150px;
+    height: 225px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px solid #87ceeb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.opcion-personaje {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 1rem 0.5rem;
+    min-width: 110px;
+    min-height: 200px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    margin-bottom: 0.5rem;
+    border: 2px solid #87ceeb;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.opcion-personaje:hover,
+.opcion-personaje:has(input[type="radio"]:checked) {
+    box-shadow: 0 4px 16px rgba(30,144,255,0.25);
+    border-color: #ffe680;
+}
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    button {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+
+    #seleccionar-personaje div {
+        flex-direction: column;
+        align-items: center;
+    }
+}
