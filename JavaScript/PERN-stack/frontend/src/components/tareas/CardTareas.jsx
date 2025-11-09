@@ -6,7 +6,6 @@ import { PiTrashSimpleLight, PiPencil } from "react-icons/pi";
 export function CardTareas({ tarea }) {
   const { eliminarTarea } = useTareas();
   const navigate = useNavigate();
-
   return (
     <Card key={tarea.id} className="py-4 px-7 justify-center flex flex-col">
       <div>
@@ -14,27 +13,20 @@ export function CardTareas({ tarea }) {
         <p className="py-4">{tarea.descripcion}</p>
       </div>
       <div className="flex justify-end gap-x-2">
-        <Button
-          onClick={() => {
-            navigate(`/tareas/${tarea.id}/editar`);
-          }}
-        >
+        <Button onClick={() => navigate(`/tareas/${tarea.id}/editar`)}>
           <PiPencil className="text-white" />
-          Editar
+          editar
         </Button>
         <Button
-          variant="danger"
-          className="bg-red-500 hover:bg-red-700"
+          className="bg-red-500 hover:bg-red-600"
           onClick={async () => {
-            if (
-              window.confirm("¿Estás seguro de que deseas eliminar esta tarea?")
-            ) {
+            if (window.confirm("¿Estas seguro de eliminar esta tarea?")) {
               await eliminarTarea(tarea.id);
             }
           }}
         >
           <PiTrashSimpleLight className="text-white" />
-          Eliminar
+          eliminar
         </Button>
       </div>
     </Card>
