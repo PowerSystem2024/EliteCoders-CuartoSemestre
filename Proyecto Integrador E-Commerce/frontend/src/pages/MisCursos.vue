@@ -28,7 +28,7 @@
           <div class="card-footer">
             <div class="hr"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap">
-              <strong>${{ c.precio }}</strong>
+              <strong>{{ formatPrice(c.precio) }}</strong>
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <RouterLink class="btn" :to="`/courses/${c.id}`">
                   📖 Ver curso
@@ -85,6 +85,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getMisCursos, uninscriptFromCourse } from '@/api/cursos'
+import { formatPrice } from '../utils/stringUtils'
 
 const courses = ref([])
 const loading = ref(true)
