@@ -1,5 +1,7 @@
 import hashlib
 import hmac
+import re
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import mercadopago
 import logging
@@ -8,7 +10,7 @@ from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
+from django.shortcuts import redirect
 from .models import Categoria, Curso, Instructor, Leccion, Inscripcion, ItemCarrito, Carrito, Pedido, ItemPedido
 from .serializers import (
     CategoriaSerializer, InstructorSerializer, LeccionSerializer, EmptySerializer,
@@ -205,7 +207,17 @@ class CarritoViewSet(viewsets.ModelViewSet):
             })
 
         # notification_url: MercadoPago will POST notifications here (webhook)
+        # Build an absolute URL and ensure it uses HTTPS for external services
         notification_url = request.build_absolute_uri(f"/api/v1/webhook/mercadopago/")
+        # If a public backend URL is configured, prefer it (allows correct host behind proxies)
+        backend_public = f'https://{settings.BACKEND_PUBLIC_URL}'
+        if backend_public:
+            notification_url = urljoin(backend_public.rstrip('/') + '/', 'api/v1/webhook/mercadopago/')
+        else:
+            parsed = urlparse(notification_url)
+            if parsed.scheme != 'https':
+                notification_url = urlunparse(('https', parsed.netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+        logger.info('Using MercadoPago notification_url=%s', notification_url)
 
         # For auto_return to work MercadoPago requires a valid back_urls.success
         # that points to a web page (frontend). We'll set back_urls to the
@@ -239,10 +251,12 @@ class CarritoViewSet(viewsets.ModelViewSet):
         if not preference or 'id' not in preference or 'init_point' not in preference:
             print('Unexpected preference response from MercadoPago:', preference_response)
             return Response({'error': 'invalid_preference_response', 'details': preference_response}, status=status.HTTP_502_BAD_GATEWAY)
-
+        
+        logger.warning('MercadoPago preference created: %s', preference)
         return Response({
             "preference_id": preference["id"],
-            "init_point": preference["init_point"],
+            # reemplazar por init_point de producción al mover a prod
+            "init_point": preference[f'{settings.MERCADOPAGO_INIT_POINT}'],
         }, status=status.HTTP_201_CREATED)
 
 
@@ -250,54 +264,126 @@ class CarritoViewSet(viewsets.ModelViewSet):
 # Endpoints para manejar el retorno desde MercadoPago
 # ------------------------------------------------------------------
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
-from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 import json
 
 logger = logging.getLogger(__name__)
 
+# -----------------------------------------------------------------
+# 1. IMPORTS NECESARIOS al inicio de tu views.py
+# -----------------------------------------------------------------
+import hmac
+import hashlib
+import json
+import logging
+import urllib.parse
+
+# Configura tu logger (si no lo tienes ya)
+logger = logging.getLogger(__name__)
+
+HEX_RE = re.compile(r'^[0-9a-fA-F]+$')
+def validate_mp_signature(request, secret, logger):
+    """
+    Valida la firma (x-signature) de MercadoPago y devuelve (notification_id, None) si es válida,
+    o (None, JsonResponse/Error) si es inválida.
+    """
+
+    try:
+        signature_header = request.headers.get('x-signature')
+        request_id_header = request.headers.get('x-request-id')
+
+        if not signature_header or not request_id_header:
+            logger.warning('Webhook recibido sin headers x-signature o x-request-id')
+            return None, HttpResponseBadRequest('Missing required headers')
+
+        # --- Parsear el header x-signature ---
+        ts_str = None
+        v1_hash_recibido = None
+
+        for part in signature_header.split(','):
+            key, value = part.strip().split('=', 1)
+            if key == 'ts':
+                ts_str = value
+            elif key == 'v1':
+                v1_hash_recibido = value
+
+        if not ts_str or not v1_hash_recibido:
+            logger.warning(f'Header x-signature con formato inválido: {signature_header}')
+            return None, HttpResponseBadRequest('Invalid signature header format')
+
+        # --- Obtener notification_id del cuerpo o query ---
+        notification_id = None
+
+        try:
+            body_json = json.loads(request.body.decode('utf-8'))
+            notification_id = body_json.get('data', {}).get('id') or body_json.get('id')
+        except json.JSONDecodeError:
+            logger.debug('El cuerpo no es JSON válido, se intenta leer desde query params')
+
+        if not notification_id:
+            query_params = urllib.parse.parse_qs(request.META.get('QUERY_STRING', ''))
+            notification_id = (
+                query_params.get('data.id', [None])[0]
+                or query_params.get('id', [None])[0]
+            )
+
+        if not notification_id:
+            logger.warning('No se encontró notification_id en body ni en query params')
+            return None, HttpResponseBadRequest('Missing notification id')
+
+        # --- Crear manifest y generar hash ---
+        manifest = f"id:{notification_id};request-id:{request_id_header};ts:{ts_str};"
+        hash_generado = hmac.new(
+            secret.encode('utf-8'),
+            manifest.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        if not hmac.compare_digest(hash_generado, v1_hash_recibido):
+            logger.error(
+                'Firma inválida. Recibida: %s | Generada: %s | Manifest: %s',
+                v1_hash_recibido, hash_generado, manifest
+            )
+            return None, JsonResponse({'error': 'invalid signature'}, status=403)
+
+        # --- Firma válida ---
+        return notification_id, None
+
+    except Exception as e:
+        logger.error('Error durante validación de firma: %s', str(e), exc_info=True)
+        return None, JsonResponse({'error': 'signature validation error'}, status=400)
+
+# -----------------------------------------------------------------
+# 2. VISTA COMPLETA DEL WEBHOOK
+# -----------------------------------------------------------------
 @csrf_exempt
 def mercadopago_webhook(request):
-    """
-    Endpoint para recibir notificaciones (IPN) de MercadoPago.
-    Valida la firma de la petición ANTES de procesar el pago.
-    """
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
 
-    # --- INICIO DE VALIDACIÓN DE FIRMA ---
+    logger.debug(
+        'mercadopago_webhook received request: headers=%s body=%s query=%s',
+        dict(request.headers),
+        request.body.decode('utf-8'),
+        request.META.get('QUERY_STRING', '')
+    )
 
-    # 1. Obtener tu clave secreta de settings
     secret = settings.MERCADOPAGO_WEBHOOK_SECRET
     if not secret:
-        logger.error('MERCADOPAGO_WEBHOOK_SECRET no está configurada en settings.')
+        logger.error('MERCADOPAGO_WEBHOOK_SECRET no configurada.')
         return JsonResponse({'error': 'server configuration error'}, status=500)
 
-    # 2. Obtener los headers de la petición
-    signature_header = request.headers.get('x-signature')
+    # --- VALIDAR FIRMA ---
+    notification_id, error_response = validate_mp_signature(request, secret, logger)
+    if error_response:
+        return error_response
+
+    # --- FIRMA VÁLIDA ---
     request_id_header = request.headers.get('x-request-id')
-
-    if not signature_header or not request_id_header:
-        logger.warning('Webhook recibido sin headers x-signature o x-request-id')
-        return HttpResponseBadRequest('Missing required headers')
-
-    # 3. Parsear el header x-signature para obtener 'ts' y 'v1'
-    try:
-        parts = signature_header.split(',')
-        ts = v1_hash = None
-        for part in parts:
-            key, value = part.split('=', 1)
-            if key == 'ts':
-                ts = value
-            elif key == 'v1':
-                v1_hash = value
-
-        if not ts or not v1_hash:
-            raise ValueError("Formato de x-signature inválido")
-
-    except Exception as e:
-        logger.warning(f'Error parseando x-signature: {e}')
-        return HttpResponseBadRequest('Invalid x-signature format')
+    logger.info(
+        'Firma de Webhook validada exitosamente para el ID: %s (Request: %s)',
+        notification_id, request_id_header
+    )
 
     # 4. Obtener el payment_id (CORRECCIÓN para UnboundLocalError)
     payment_id = None  # Inicializar
@@ -326,22 +412,8 @@ def mercadopago_webhook(request):
         logger.exception('Error grave al parsear el request del webhook: %s', e)
         return JsonResponse({'ok': False, 'error': 'request parsing failed'}, status=200)
 
-    # 5. Crear el "manifest" o plantilla de firma
-    manifest_template = f"id:{payment_id};request-id:{request_id_header};ts:{ts};"
-
-    # 6. Calcular la firma HMAC-SHA256
-    calculated_hash = hmac.new(
-        secret.encode('utf-8'),
-        msg=manifest_template.encode('utf-8'),
-        digestmod=hashlib.sha256
-    ).hexdigest()
-
-    # 7. Comparar de forma segura la firma calculada con la recibida (v1)
-    if not hmac.compare_digest(calculated_hash, v1_hash):
-        logger.error(f'Firma de Webhook inválida. Calculada: {calculated_hash}, Recibida: {v1_hash}')
-        return JsonResponse({'error': 'invalid signature'}, status=403)  # 403 Forbidden
-
-    logger.info(f'Firma de Webhook validada exitosamente para payment_id: {payment_id}')
+    # La firma fue validada arriba mediante comparación directa del header
+    logger.info('Firma de Webhook validada exitosamente (raw header match) para payment_id: %s', payment_id)
 
     # --- FIN DE VALIDACIÓN DE FIRMA ---
 
