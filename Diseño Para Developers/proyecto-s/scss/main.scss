@@ -1,50 +1,184 @@
-$primary-color:rgb(90, 89, 28);
-$secondary-color:rgb(224, 124, 31);
-$tertiary-color:rgb(226, 226, 154);
-$primary-text-color:rgb(255, 255, 255);
-$font-stack: "IBM Plex Sans", sans-serif;
+// Variables
+$primary-color: rgb(90, 89, 28);
+$secondary-color: rgb(224, 124, 31);
+$tertiary-color: rgb(226, 226, 154);
+$quaternary-color: rgb(119, 109, 64);
+$primary-tex-color: rgb(63, 38, 1);
+$primary-text-color: rgb(255, 255, 255);
+$font-stack: 'IBM Plex Sans', sans-serif;
+$paragraph-size: 1.5em;
 
-body{
-    margin:0;
-    padding:0;
-    background-color:rgb(241, 208, 115);
-    font-family:$font-stack;
+// Mixins
+@mixin flexCenter($direction, $content, $align) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $content;
+  align-items: $align;
 }
 
-nav{
-    width: 100%;
-    height: 100px;
-    p{
+@mixin buttonStyle {
+  button {
+    background: none;
+    border-style: none;
+  }
+}
 
-        font-size: 1.5;
+// Base
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background-color: rgb(241, 208, 115);
+  font-family: $font-stack;
+  color: $primary-tex-color;
+}
 
-        padding-left: 30px ;
+// NAV: remove fixed height, add spacing and icons gap
+nav {
+  width: auto;
+  @include flexCenter(row, space-between, center);
+  color: $primary-tex-color;
+  padding: 15px;
 
+  p {
+    font-size: 1.5em;
+    padding-left: 30px;
+    margin: 0;
+  }
+
+  .icons {
+    @include flexCenter(row, flex-end, center);
+    gap: 15px;
+    @include buttonStyle;
+  }
+}
+
+// Main article layout
+article {
+  width: auto;
+  color: $primary-tex-color;
+  @include flexCenter(row, space-between, center);
+  padding: 70px 45px 45px 45px;
+
+  .info-section {
+    @include flexCenter(column, flex-start, flex-start);
+    gap: 25px;
+
+    h1 {
+      font-size: 3em;
+      padding: 0;
+      margin: 0;
     }
 
-    .icons{
+    p { font-size: $paragraph-size; }
 
-         display: flex;
-
-         botton {
-
-            background: none;
-
-            border-style: none;
-
-         }
-
+    button {
+      width: 12vw;
+      min-width: 180px;
+      padding: 20px;
+      background-color: $quaternary-color;
+      border: none;
+      border-radius: 35px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
     }
+  }
+
+  .imagen-section {
+    @include flexCenter(column, center, center);
+    img {
+      width: 25vw;
+      max-width: 420px;
+      border-radius: 19px;
+      display: block;
+    }
+  }
 }
 
-main{
-    background-color:$primary-color;
+// Section background & headings
+section {
+  width: auto;
+  height: auto;
+  background-color: rgb(214, 201, 176);
+  padding: 60px;
 
+  h2 {
+    color: $primary-tex-color;
+    font-size: 2em;
+    font-weight: 300;
+    padding-bottom: 60px;
+    margin: 0;
+  }
 }
 
-footer{
-    $background:rgb(199, 116, 20);
-    background-color:$background;
+// Product card layout
+.card-section1 {
+  @include flexCenter(row, center, center);
+  column-gap: 200px;
+  row-gap: 200px;
+  flex-wrap: wrap;
+}
+
+.product-card {
+  width: 14vw;
+  min-width: 240px;
+  height: 45vh;
+  min-height: 360px;
+  background-color: $secondary-color;
+  color: $primary-tex-color;
+  padding: 20px;
+  border-radius: 8px;
+
+  .icons {
     width: 100%;
-    height: 250px;
+    @include flexCenter(row, flex-end, center);
+    padding-bottom: 12px;
+
+    svg {
+      width: 28px;
+      height: 28px;
+      stroke: #3F3F46;
+      stroke-width: 2;
+      fill: none;
+    }
+  }
+
+  .product-image {
+    width: 100%;
+    img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+    }
+  }
+
+  h3 { margin: 12px 0 4px 0; }
+  p  { margin: 0; font-size: 0.95em; }
+}
+
+// Section 1 styles
+.section1 {
+  // inherits general section styles
+}
+
+// Section 2 inherits (herencia) and overrides colors
+.section2 {
+  @extend .section1;
+
+  .product-card {
+    background-color: $tertiary-color;
+    color: rgb(37, 51, 12);
+  }
+}
+
+// Main background area (kept from original)
+main { background-color: $primary-color; }
+
+footer {
+  background-color: rgb(199, 116, 20);
+  width: 100%;
+  height: 250px;
 }
