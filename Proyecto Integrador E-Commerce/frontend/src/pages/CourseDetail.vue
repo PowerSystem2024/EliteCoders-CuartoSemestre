@@ -5,6 +5,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { getCursoById, getMisCursos, getCursoLecciones } from '@/api/cursos'
 import { getCarrito, agregarCursoCarrito } from '@/api/carrito'
+import { formatPrice } from '../utils/stringUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,10 +117,6 @@ function viewLesson(lesson, index) {
   const lessonId = lesson.id || (index + 1)
   router.push({
     path: `/courses/${course.value.id}/lessons/${lessonId}`,
-    query: { 
-      lesson: lesson.id || `lesson-${index + 1}`,
-      title: lesson.titulo || lesson.title
-    }
   })
 }
 </script>
@@ -203,7 +200,7 @@ function viewLesson(lesson, index) {
           <div style="margin: 1rem 0">
             <p><strong>👨‍🏫 Instructor:</strong> {{ course.instructor?.nombre || '—' }}</p>
             <p><strong>📂 Categoría:</strong> {{ course.categoria?.nombre || '—' }}</p>
-            <p><strong>💰 Precio:</strong> ${{ Number(course.precio).toFixed(2) }}</p>
+            <p><strong>💰 Precio:</strong> {{ formatPrice(course.precio) }}</p>
           </div>
         </div>
         <div class="card-footer">
@@ -220,7 +217,7 @@ function viewLesson(lesson, index) {
         <div class="list-pill">Salida laboral y testimonios</div>
         <div class="list-pill">Preguntas Frecuentes</div>
 
-        <div class="list-pill"><strong>${{ Number(course.precio).toFixed(2) }}</strong></div>
+        <div class="list-pill"><strong>{{ formatPrice(course.precio) }}</strong></div>
 
         <button
           class="btn block"

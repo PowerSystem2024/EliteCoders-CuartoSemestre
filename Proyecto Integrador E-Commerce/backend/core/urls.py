@@ -9,6 +9,7 @@ from .views import (
     MisCursosView,
     CarritoViewSet,
 )
+from . import views
 
 router = routers.SimpleRouter()
 router.register(r'categorias', CategoriaViewSet, basename='categorias')
@@ -23,4 +24,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(cursos_router.urls)),
     path('mis-cursos/', MisCursosView.as_view(), name='mis-cursos'),
+    path('webhook/mercadopago/', views.mercadopago_webhook, name='mp-webhook'),
 ]

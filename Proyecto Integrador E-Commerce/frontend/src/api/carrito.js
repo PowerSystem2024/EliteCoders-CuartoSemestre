@@ -35,3 +35,23 @@ export const vaciarCarrito = (carritoId) =>
  */
 export const checkoutCarrito = (carritoId) =>
   api.post(`/carrito/${carritoId}/checkout/`);
+
+// Nota: función alternativa que crea la preferencia y luego intenta vaciar
+// el carrito en el servidor para mantener front/back sincronizados.
+export const checkoutAndVaciar = async (carritoId) => {
+  // Crear la preferencia de pago
+  const response = await api.post(`/carrito/${carritoId}/checkout/`);
+
+  // Intentar vaciar el carrito en el servidor (no es crítico si falla)
+  try {
+    await api.post(`/carrito/${carritoId}/vaciar/`);
+  } catch (err) {
+    // Registro suave: no interrumpimos la respuesta de la preferencia
+    // porque la redirección de pago puede venir a continuación.
+    // El frontend también vaciará la vista de todos modos.
+    // eslint-disable-next-line no-console
+    console.warn('No se pudo vaciar el carrito en el servidor:', err);
+  }
+
+  return response;
+};

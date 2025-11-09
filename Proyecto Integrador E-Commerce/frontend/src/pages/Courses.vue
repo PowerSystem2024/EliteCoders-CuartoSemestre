@@ -2,13 +2,12 @@
 import { ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { getCursos } from "@/api/cursos";
-
-// ✅ Importar archivos para que Vite los procese
 import vueCourse      from "@/assets/courses/vue-course.jpg";
 import uxCourse       from "@/assets/courses/ux-course.jpg";
 import dataCourse     from "@/assets/courses/data-course.png";
 import marketingCourse from "@/assets/courses/marketing-course.jpg";
 import placeholder    from "@/assets/courses/placeholder.jpg";
+import { formatPrice } from "../utils/stringUtils";
 
 const cursos = ref([]);
 const loading = ref(true);
@@ -69,7 +68,7 @@ onMounted(async () => {
           </div>
 
           <div class="course-footer">
-            <div class="price">${{ Number(c.precio).toFixed(2) }}</div>
+            <div class="price">{{ formatPrice(c.precio) }}</div>
             <span class="ver-mas">Ver detalle →</span>
           </div>
         </div>
@@ -98,7 +97,7 @@ onMounted(async () => {
 .course-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.06); border-color: #cbd5e1; }
 .course-img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
 .course-body { padding: 12px 14px 14px; }
-.course-title { font-weight: 600; font-size: 1.05rem; }
+.course-title { font-weight: 600; font-size: 1.05rem; color: #000; }
 .course-desc { margin-top: .25rem; color: #64748b; font-size: .92rem; min-height: 44px; }
 
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
@@ -109,6 +108,6 @@ onMounted(async () => {
 .chip-purple { background: #f5f3ff; color: #7c3aed; border-color:#ddd6fe; }
 
 .course-footer { margin-top: .75rem; display: flex; align-items: center; justify-content: space-between; }
-.price { font-weight: 700; font-size: 1.05rem; }
+.price { font-weight: 700; font-size: 1.05rem; color: var(--mint) }
 .ver-mas { color: #2563eb; font-weight: 600; font-size: .9rem; }
 </style>

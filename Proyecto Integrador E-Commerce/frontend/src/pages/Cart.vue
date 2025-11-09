@@ -149,9 +149,15 @@ const checkout = async () => {
   if (!carrito.value) return;
   processingCheckout.value = true;
   try {
-    await checkoutCarrito(carrito.value.id);
-    await cargarCarrito(); // carrito vaciado
-    alert("Compra realizada con éxito!");
+    // Crear la preferencia de pago y redirigir al usuario a MercadoPago.
+    // No vaciamos el carrito en el front hasta que el backend confirme
+    // que el pago fue exitoso y marque el carrito como completado.
+    const response = await checkoutCarrito(carrito.value.id);
+    if (response && response.data && response.data.init_point) {
+      window.location.href = response.data.init_point;
+      return;
+    }
+    alert("No se pudo iniciar el pago. Intenta nuevamente.");
   } catch (error) {
     console.error("Error al hacer checkout:", error);
   } finally {
