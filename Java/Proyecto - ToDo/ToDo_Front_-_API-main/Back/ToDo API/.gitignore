@@ -1,0 +1,95 @@
+# ===========================
+# Maven / Spring Boot
+# ===========================
+
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# ===========================
+# IDEs
+# ===========================
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# ===========================
+# Sensitive Configuration
+# ===========================
+
+### Application Properties ###
+/src/main/resources/application.properties
+/src/main/resources/application.yml
+/src/main/resources/application-*.properties
+/src/main/resources/application-*.yml
+
+# Keep example files
+!application.properties.example
+!application.yml.example
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# ===========================
+# Logs and Temporary Files
+# ===========================
+
+### Logs ###
+*.log
+logs/
+log/
+
+### Temporary Files ###
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ===========================
+# Project Specific
+# ===========================
+
+### Project images ###
+/Capturas/
+
+### Compiled Files ###
+*.class
+
+### OS Files ###
+.DS_Store
+Thumbs.db
